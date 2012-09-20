@@ -1,13 +1,14 @@
 -- Standard awesome library
-require("awful")
-require("awful.autofocus")
-require("awful.rules")
+local awful = require("awful")
+local awful_autofocus = require("awful.autofocus")
+local awful_rules = require("awful.rules")
 -- Widget and layout library
-require("wibox")
+local wibox = require("wibox")
 -- Theme handling library
-require("beautiful")
+local beautiful = require("beautiful")
 -- Notification library
-require("naughty")
+local naughty = require("naughty")
+local vicious = require("vicious")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -39,7 +40,7 @@ end
 beautiful.init("/home/nomaster/.config/awesome/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
-terminal = os.getenv("TERMINAL") or "urxvtc"
+terminal = os.getenv("TERMINAL") or "urxvt"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
 
@@ -98,6 +99,17 @@ mylauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
 -- {{{ Wibox
 -- Create a textclock widget
 mytextclock = awful.widget.textclock()
+-- }}}
+
+memwidget = awful.widget.progressbar()
+memwidget:set_width(20)
+vicious.cache(vicious.widgets.mem)
+vicious.register(memwidget, vicious.widgets.mem, "$1 ($2MB/$3MB)", 13)
+
+cpuwidget = awful.widget.graph()
+cpuwidget:set_width(20)
+vicious.register(cpuwidget, vicious.widgets.cpu, "$1", 1)
+
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -174,6 +186,8 @@ for s = 1, screen.count() do
     local right_layout = wibox.layout.fixed.horizontal()
     if s == 1 then right_layout:add(wibox.widget.systray()) end
     right_layout:add(mytextclock)
+    right_layout:add(cpuwidget)
+    right_layout:add(memwidget)
     right_layout:add(mylayoutbox[s])
 
     -- Now bring it all together (with the tasklist in the middle)
@@ -253,15 +267,15 @@ globalkeys = awful.util.table.join(
                   mypromptbox[mouse.screen].widget,
                   awful.util.eval, nil,
                   awful.util.getdir("cache") .. "/history_eval")
-              end),
+              end) --,
 
     -- Multimedia Keys
-    awful.key({ }, "XF86AudioRaiseVolume", function () awful.util.spawn('mpc -h localhost volume +1') end),
-    awful.key({ }, "XF86AudioLowerVolume", function () awful.util.spawn('mpc -h localhost volume -1') end),
-    awful.key({ }, "XF86AudioMute", function () awful.util.spawn('mpc -h localhost volume 0') end),
-    awful.key({ }, "XF86AudioNext", function () awful.util.spawn('mpc -h localhost next') end),
-    awful.key({ }, "XF86AudioPrev", function () awful.util.spawn('mpc -h localhost prev') end),
-    awful.key({ }, "XF86AudioPlay", function () awful.util.spawn('mpc -h localhost toggle') end)
+    -- awful.key({ }, "XF86AudioRaiseVolume", function () awful.util.spawn('mpc -h localhost volume +1') end),
+    -- awful.key({ }, "XF86AudioLowerVolume", function () awful.util.spawn('mpc -h localhost volume -1') end),
+    -- awful.key({ }, "XF86AudioMute", function () awful.util.spawn('mpc -h localhost volume 0') end),
+    -- awful.key({ }, "XF86AudioNext", function () awful.util.spawn('mpc -h localhost next') end),
+    -- awful.key({ }, "XF86AudioPrev", function () awful.util.spawn('mpc -h localhost prev') end),
+    -- awful.key({ }, "XF86AudioPlay", function () awful.util.spawn('mpc -h localhost toggle') end)
 )
 
 clientkeys = awful.util.table.join(
@@ -328,12 +342,12 @@ clientbuttons = awful.util.table.join(
     awful.button({ modkey }, 1, awful.mouse.client.move),
     awful.button({ modkey }, 3, awful.mouse.client.resize))
 
--- Set keys
+-- Set keysu
 root.keys(globalkeys)
 -- }}}
 
 -- {{{ Rules
-awful.rules.rules = {
+awful_rules.rules = {
     -- All clients will match this rule.
     { rule = { },
       properties = { border_width = beautiful.border_width,
@@ -341,16 +355,16 @@ awful.rules.rules = {
                      focus = true,
                      keys = clientkeys,
                      buttons = clientbuttons } },
-    { rule = { class = "MPlayer" },
-      properties = { floating = true } },
-    { rule = { class = "pinentry" },
-      properties = { floating = true } },
-    { rule = { class = "gimp" },
-      properties = { floating = true } },
-    -- Set Firefox to always map on tags number 2 of screen 1.
-    -- { rule = { class = "Firefox" },
-    ---   properties = { tag = tags[1][2] } },
-    { rule = { class = "chromium" },  properties = {tag = tags[1][3]}}
+    { rule = { class = "pinentry" }, properties = { floating = true } },
+    { rule = { class = "Thunderbird" }, properties = { tag = tags[1][2] } },
+    { rule = { class = "Pidgin" }, properties = { tag = tags[1][2] } },
+    { rule = { class = "Firefox" }, properties = { tag = tags[1][3] } },
+    { rule = { class = "Hotot" }, properties = { tag = tags[1][3] } },
+    { rule = { class = "GNU Image Manipulation Program" }, properties = { tag = tags[1][5] } },
+    { rule = { class = "Inkscape" }, properties = { tag = tags[1][5] } },
+    { rule = { class = "Transmission" }, properties = { tag = tags[1][8] } },
+    { rule = { class = "Volume Control" }, properties = { tag = tags[1][7] } },
+    { rule = { class = "chromium" },  properties = { tag = tags[1][3] } }
 }
 -- }}}
 
@@ -378,6 +392,16 @@ client.connect_signal("manage", function (c, startup)
     end
 end)
 
-client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
-client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+client.connect_signal("focus", function(c)
+  c.border_color = beautiful.border_focus
+  if c.class:lower():find("rxvt") then
+    c.opacity = 0.95
+  else
+    c.opacity = 1.0
+  end
+end)
+client.connect_signal("unfocus", function(c)
+  c.border_color = beautiful.border_normal
+  c.opacity = 0.8
+end)
 -- }}}
