@@ -8,13 +8,11 @@
 
 -- {{{ Main
 theme = {}
- theme.wallpaper_cmd = { "feh --bg-fill /home/mic/img/wallpapers/default" }
- --theme.wallpaper_cmd = { "/bin/true" }
--- theme.wallpaper_cmd = { "mplayer -rootwin -ao null  -noconsolecontrols -speed 0.7 -vo xv -vf scale 1680x1050 /home/mic/Videos/wallpaper &" }
+theme.wallpaper_cmd = { "feh --bg-fill /home/nomaster/wallpapers/0 /home/nomaster/wallpapers/1" }
 -- }}}
 
 -- {{{ Styles
-theme.font      = "Droid Sans 8"
+theme.font      = "Droid 8"
 
 -- {{{ Colors
 theme.fg_normal = "#DCDCCC"
@@ -28,7 +26,7 @@ theme.bg_urgent = "#CC9393"
 -- {{{ Borders
 theme.border_width  = "1"
 theme.border_normal = "#050505"
-theme.border_focus  = "DDDDDDD"
+theme.border_focus  = "#DDDDDD"
 theme.border_urgent = "#CC9393"
 theme.border_marked = "#CC9393"
 -- }}}
