@@ -8,11 +8,11 @@
 
 -- {{{ Main
 theme = {}
-theme.wallpaper_cmd = { "feh --bg-fill /home/nomaster/wallpapers/0 /home/nomaster/wallpapers/1" }
+theme.wallpaper_cmd = { "feh --bg-fill /home/nomaster/wallpapers/0 /home/nomaster/wallpapers/1; xsetroot -cursor_name left_ptr" }
 -- }}}
 
 -- {{{ Styles
-theme.font      = "Droid 8"
+theme.font      = "sans-serif 8"
 
 -- {{{ Colors
 theme.fg_normal = "#DCDCCC"

@@ -1,0 +1,3 @@
+[submodule "uzful"]
+	path = uzful
+	url = git://github.com/dodo/uzful.git

@@ -9,6 +9,9 @@ local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
 local vicious = require("vicious")
+local uzful = require("uzful")
+
+uzful.util.patch.vicious() -- enable auto caching
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -40,7 +43,7 @@ end
 beautiful.init("/home/nomaster/.config/awesome/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
-terminal = os.getenv("TERMINAL") or "urxvt"
+terminal = os.getenv("TERMINAL") or "urxvtc"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
 
@@ -110,6 +113,14 @@ cpuwidget = awful.widget.graph()
 cpuwidget:set_width(20)
 vicious.register(cpuwidget, vicious.widgets.cpu, "$1", 1)
 
+batwidget = awful.widget.progressbar()
+batwidget:set_width(8)
+batwidget:set_height(10)
+batwidget:set_vertical(true)
+batwidget:set_background_color("#494B4F")
+batwidget:set_border_color(nil)
+batwidget:set_color("#AECF96")
+vicious.register(batwidget, vicious.widgets.bat, "$2", 61, "BAT0")
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -188,6 +199,7 @@ for s = 1, screen.count() do
     right_layout:add(mytextclock)
     right_layout:add(cpuwidget)
     right_layout:add(memwidget)
+    right_layout:add(batwidget)
     right_layout:add(mylayoutbox[s])
 
     -- Now bring it all together (with the tasklist in the middle)
@@ -211,9 +223,10 @@ root.buttons(awful.util.table.join(
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
     awful.key({}, "#160", function () awful.util.spawn("xtrlock") end),
-    -- awful.key({}, "#244", function () awful.util.spawn_with_shell('notify-send battery "$(ibam)"') end),
-    awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
-    awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ),
+    awful.key({ modkey,           }, "Left", awful.tag.viewprev       ),
+    awful.key({                   }, "XF86Back",  awful.tag.viewprev       ),
+    awful.key({ modkey,           }, "Right", awful.tag.viewnext       ),
+    awful.key({                   }, "XF86Forward", awful.tag.viewnext       ),
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore),
 
     awful.key({ modkey,           }, "j",
@@ -244,6 +257,7 @@ globalkeys = awful.util.table.join(
 
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
+    awful.key({ modkey,           }, "b", function () awful.util.spawn('$BROWSER') end),
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
 
@@ -267,15 +281,15 @@ globalkeys = awful.util.table.join(
                   mypromptbox[mouse.screen].widget,
                   awful.util.eval, nil,
                   awful.util.getdir("cache") .. "/history_eval")
-              end) --,
+              end),
 
     -- Multimedia Keys
-    -- awful.key({ }, "XF86AudioRaiseVolume", function () awful.util.spawn('mpc -h localhost volume +1') end),
-    -- awful.key({ }, "XF86AudioLowerVolume", function () awful.util.spawn('mpc -h localhost volume -1') end),
-    -- awful.key({ }, "XF86AudioMute", function () awful.util.spawn('mpc -h localhost volume 0') end),
-    -- awful.key({ }, "XF86AudioNext", function () awful.util.spawn('mpc -h localhost next') end),
-    -- awful.key({ }, "XF86AudioPrev", function () awful.util.spawn('mpc -h localhost prev') end),
-    -- awful.key({ }, "XF86AudioPlay", function () awful.util.spawn('mpc -h localhost toggle') end)
+    awful.key({ }, "XF86AudioRaiseVolume", function () awful.util.spawn('mpc -h localhost volume +1') end),
+    awful.key({ }, "XF86AudioLowerVolume", function () awful.util.spawn('mpc -h localhost volume -1') end),
+    awful.key({ }, "XF86AudioMute", function () awful.util.spawn('mpc -h localhost volume 0') end),
+    awful.key({ }, "XF86AudioNext", function () awful.util.spawn('mpc -h localhost next') end),
+    awful.key({ }, "XF86AudioPrev", function () awful.util.spawn('mpc -h localhost prev') end),
+    awful.key({ }, "XF86AudioPlay", function () awful.util.spawn('mpc -h localhost toggle') end)
 )
 
 clientkeys = awful.util.table.join(
@@ -359,6 +373,9 @@ awful_rules.rules = {
     { rule = { class = "Thunderbird" }, properties = { tag = tags[1][2] } },
     { rule = { class = "Pidgin" }, properties = { tag = tags[1][2] } },
     { rule = { class = "Firefox" }, properties = { tag = tags[1][3] } },
+    { rule = { class = "Dwb" }, properties = { tag = tags[1][3] } },
+    { rule = { class = "luakit" }, properties = { tag = tags[1][3] } },
+    { rule = { class = "Chromium" }, properties = { tag = tags[1][3] } },
     { rule = { class = "Hotot" }, properties = { tag = tags[1][3] } },
     { rule = { class = "GNU Image Manipulation Program" }, properties = { tag = tags[1][5] } },
     { rule = { class = "Inkscape" }, properties = { tag = tags[1][5] } },
@@ -394,14 +411,18 @@ end)
 
 client.connect_signal("focus", function(c)
   c.border_color = beautiful.border_focus
-  if c.class:lower():find("rxvt") then
-    c.opacity = 0.95
+  if c.class and c.class:lower():find("rxvt") or c.class:lower():find("lxterminal") then
+    c.opacity = 0.9
   else
-    c.opacity = 1.0
+    c.opacity = 1
   end
 end)
 client.connect_signal("unfocus", function(c)
   c.border_color = beautiful.border_normal
-  c.opacity = 0.8
+  if c.class and c.class:lower():find("mplayer") or c.class:lower():find("feh") then
+    c.opacity = 1
+  else
+    c.opacity = 0.8
+  end
 end)
 -- }}}
