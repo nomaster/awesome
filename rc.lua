@@ -2,6 +2,7 @@
 local awful = require("awful")
 local awful_autofocus = require("awful.autofocus")
 local awful_rules = require("awful.rules")
+local awful_tag = require("awful.tag")
 -- Widget and layout library
 local wibox = require("wibox")
 -- Theme handling library
@@ -101,7 +102,7 @@ mylauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
 
 -- {{{ Wibox
 -- Create a textclock widget
-mytextclock = awful.widget.textclock()
+mytextclock = awful.widget.textclock(" %a %b %d, %H:%M:%S ", 1)
 -- }}}
 
 memwidget = awful.widget.progressbar()
@@ -256,7 +257,7 @@ globalkeys = awful.util.table.join(
         end),
 
     -- Standard program
-    awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
+    awful.key({ modkey,           }, "Return", function () awful.util.spawn("urxvtc -e mux " .. awful_tag.selected(1).name) end),
     awful.key({ modkey,           }, "b", function () awful.util.spawn('$BROWSER') end),
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
